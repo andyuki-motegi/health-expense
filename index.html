@@ -400,7 +400,7 @@ function App(){
           </div>
         )}
 
-        {/* ===== 申請フォーム ===== */}}
+        {/* ===== 申請フォーム ===== */}
         {view==="form"&&(
           <div className="card">
             {!gasUrl&&(
@@ -621,9 +621,10 @@ function App(){
                             <td><StatusBadge status={rec.status}/></td>
                             <td>
                               <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                              {rec.status==="申請中"
-                                ?<button className="btn-approve" onClick={()=>toggleStatus(rec.id,"承認済")}>承認</button>
-                                :<button className="btn-revert" onClick={()=>toggleStatus(rec.id,"申請中")}>差戻</button>}
+                              {rec.status==="申請中" &&
+                                <button className="btn-approve" onClick={()=>toggleStatus(rec.id,"承認済")}>承認</button>}
+                              {rec.status!=="申請中" &&
+                                <button className="btn-revert" onClick={()=>toggleStatus(rec.id,"申請中")}>差戻</button>}
                               <button className="btn-delete" onClick={()=>deleteRecord(rec.id)} title="削除">🗑</button>
                               </div>
                             </td>
