@@ -112,6 +112,8 @@
   .status-badge { border-radius:20px; padding:3px 10px; font-size:11px; font-weight:700; }
   .btn-approve { background:#4caf7d; color:#fff; border:none; border-radius:6px; padding:5px 14px; font-size:12px; font-weight:700; cursor:pointer; }
   .btn-revert { background:#f5f5f5; color:#666; border:1px solid #ddd; border-radius:6px; padding:5px 14px; font-size:12px; font-weight:700; cursor:pointer; }
+  .btn-delete { background:none; border:none; font-size:16px; cursor:pointer; padding:2px 6px; opacity:.5; transition:opacity .15s; }
+  .btn-delete:hover { opacity:1; }
   .btn-reload { background:#f0f7ff; color:#3b82f6; border:1.5px solid #3b82f6; border-radius:8px; padding:6px 16px; font-size:12px; font-weight:700; cursor:pointer; }
 
   footer { text-align:center; padding:16px; font-size:11px; color:#aaa; border-top:1px solid #e8e8e8; background:#fff; line-height:1.8; }
@@ -275,6 +277,17 @@ function App(){
     }
     setRecords(r=>r.map(rec=>rec.id===id?{...rec,status}:rec));
     showToast(status==="承認済"?"承認しました":"差し戻しました", status==="承認済"?"success":"error",2000);
+  }
+
+  async function deleteRecord(id){
+    if(!window.confirm("この申請を削除しますか？")) return;
+    if(gasUrl){
+      try{
+        await gasGet(gasUrl, {action:"deleteRecord", id:String(id)});
+      }catch(e){ showToast("削除に失敗しました","error"); return; }
+    }
+    setRecords(r=>r.filter(rec=>rec.id!==id));
+    showToast("削除しました","success",2000);
   }
 
   function saveGasUrl(){
@@ -610,6 +623,7 @@ function App(){
                               {rec.status==="申請中"
                                 ?<button className="btn-approve" onClick={()=>toggleStatus(rec.id,"承認済")}>承認</button>
                                 :<button className="btn-revert" onClick={()=>toggleStatus(rec.id,"申請中")}>差戻</button>}
+                              <button className="btn-delete" onClick={()=>deleteRecord(rec.id)}>🗑</button>
                             </td>
                           </tr>
                         );
