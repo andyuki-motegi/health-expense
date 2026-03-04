@@ -620,10 +620,12 @@ function App(){
                             <td style={{textAlign:"right",fontWeight:800,color:"#e07b3a",fontSize:15}}>¥{Number(rec.amount).toLocaleString()}</td>
                             <td><StatusBadge status={rec.status}/></td>
                             <td>
+                              <div style={{display:"flex",gap:6,alignItems:"center"}}>
                               {rec.status==="申請中"
                                 ?<button className="btn-approve" onClick={()=>toggleStatus(rec.id,"承認済")}>承認</button>
                                 :<button className="btn-revert" onClick={()=>toggleStatus(rec.id,"申請中")}>差戻</button>}
-                              <button className="btn-delete" onClick={()=>deleteRecord(rec.id)}>🗑</button>
+                              <button className="btn-delete" onClick={()=>deleteRecord(rec.id)} title="削除">🗑</button>
+                              </div>
                             </td>
                           </tr>
                         );
