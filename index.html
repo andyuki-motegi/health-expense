@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>交通費精算システム｜2026年度 健康診断</title>
+<!-- 検索エンジンにインデックスさせない -->
+<meta name="robots" content="noindex, nofollow, noarchive">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif; background: #f5f3ef; color: #2d2d2d; }
+
+  /* ===== パスワード画面 ===== */
+  #pw-screen {
+    position: fixed; inset: 0; z-index: 9999;
+    background: linear-gradient(135deg, #d4611a 0%, #e07b3a 50%, #f5a623 100%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #pw-screen.hidden { display: none; }
+  .pw-box {
+    background: #fff; border-radius: 20px; padding: 48px 40px;
+    width: 100%; max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    text-align: center;
+  }
+  .pw-logo { font-size: 48px; margin-bottom: 12px; }
+  .pw-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; color: #1a1a1a; }
+  .pw-sub { font-size: 13px; color: #888; margin-bottom: 32px; }
+  .pw-input {
+    width: 100%; padding: 14px 18px; border: 2px solid #ddd; border-radius: 10px;
+    font-size: 18px; text-align: center; letter-spacing: 4px; outline: none;
+    font-family: inherit; margin-bottom: 14px; transition: border-color .2s;
+  }
+  .pw-input:focus { border-color: #e07b3a; }
+  .pw-input.error { border-color: #ef4444; animation: shake .3s; }
+  .pw-btn {
+    width: 100%; padding: 14px; background: linear-gradient(135deg,#d4611a,#f5a623);
+    color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700;
+    cursor: pointer; font-family: inherit; margin-bottom: 12px;
+  }
+  .pw-error { color: #ef4444; font-size: 13px; font-weight: 700; min-height: 18px; }
+  .pw-hint { font-size: 11px; color: #ccc; margin-top: 20px; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+  }
+  button { font-family: inherit; }
+  input, textarea { font-family: inherit; }
+
+  .header { background: linear-gradient(135deg,#d4611a 0%,#e07b3a 50%,#f5a623 100%); color:#fff; padding:20px 24px; box-shadow:0 4px 20px rgba(212,97,26,.3); }
+  .header-inner { max-width:1040px; margin:0 auto; display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:16px; }
+  .header-badge { background:rgba(255,255,255,.25); border-radius:20px; padding:3px 12px; font-size:12px; display:inline-block; margin-bottom:6px; }
+  .header h1 { font-size:24px; font-weight:800; }
+  .header-sub { margin-top:4px; font-size:12px; opacity:.85; }
+  .tabs { display:flex; gap:8px; flex-wrap:wrap; }
+  .tab { background:rgba(255,255,255,.2); border:1px solid rgba(255,255,255,.4); color:#fff; padding:8px 18px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; }
+  .tab.active { background:#fff; color:#d4611a; border-color:#fff; }
+
+  .main { max-width:1040px; margin:0 auto; padding:28px 16px 48px; }
+  .card { background:#fff; border-radius:16px; padding:32px 36px; box-shadow:0 2px 16px rgba(0,0,0,.07); margin-bottom:24px; }
+  @media(max-width:600px){ .card { padding:20px 16px; } }
+
+  .form-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #eee; flex-wrap:wrap; gap:10px; }
+  .form-header h2 { font-size:20px; font-weight:800; }
+  .rate-chip { background:#fff8f0; border:1px solid #f5a623; color:#d4611a; border-radius:20px; padding:4px 14px; font-size:13px; font-weight:700; }
+
+  .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:20px; }
+  .fg { margin-bottom:20px; }
+  label.lbl { display:block; font-size:13px; font-weight:700; margin-bottom:6px; color:#444; }
+  .req { background:#e07b3a; color:#fff; font-size:10px; padding:1px 6px; border-radius:4px; margin-left:4px; }
+  input[type=text], input[type=date], textarea { width:100%; padding:10px 14px; border:1.5px solid #ddd; border-radius:8px; font-size:14px; outline:none; background:#fff; }
+  textarea { min-height:72px; resize:vertical; }
+  .helper { font-size:12px; color:#888; margin-bottom:10px; line-height:1.6; }
+
+  .company-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:10px; }
+  .sel-card { background:#fafafa; border:2px solid #e8e8e8; border-radius:10px; padding:12px 16px; cursor:pointer; text-align:left; width:100%; font-size:13px; font-weight:700; transition:all .15s; }
+  .sel-card.active { background:#fff8f0; border-color:#e07b3a; box-shadow:0 0 0 3px rgba(224,123,58,.15); }
+
+  .route-box { background:#f9f9f9; border:1px solid #eee; border-radius:14px; padding:20px 24px; margin-bottom:20px; }
+  .route-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media(max-width:640px) { .route-grid { grid-template-columns:1fr; } }
+  .route-step-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .route-step-badge { color:#fff; font-size:11px; font-weight:800; padding:3px 10px; border-radius:20px; }
+  .route-visual { display:flex; align-items:center; justify-content:center; gap:12px; background:#fff; border:1px solid #f0e0cc; border-radius:10px; padding:14px 20px; margin-bottom:16px; flex-wrap:wrap; }
+  .route-node { text-align:center; }
+  .route-node-icon { font-size:28px; line-height:1; }
+  .route-node-label { font-size:11px; font-weight:700; color:#444; margin-top:4px; }
+  .route-arrow { font-size:13px; color:#e07b3a; font-weight:800; white-space:nowrap; }
+
+  .loc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; }
+  .loc-card { background:#fff; border:2px solid #e8e8e8; border-radius:10px; padding:10px 8px; cursor:pointer; text-align:center; width:100%; transition:all .15s; }
+  .loc-card.active { background:#fff8f0; border-color:#e07b3a; box-shadow:0 0 0 3px rgba(224,123,58,.15); }
+  .loc-card-icon { font-size:20px; margin-bottom:4px; }
+  .loc-card-name { font-size:11px; font-weight:800; margin-bottom:2px; }
+  .loc-card-addr { font-size:9px; color:#999; margin-bottom:4px; line-height:1.3; }
+  .loc-dist { font-size:10px; background:#fdf3e7; border-radius:5px; padding:2px 6px; color:#e07b3a; font-weight:700; display:inline-block; }
+  .loc-manual { font-size:10px; background:#f0f7ff; border-radius:5px; padding:2px 6px; color:#3b82f6; font-weight:700; display:inline-block; }
+
+  .dist-box { background:#fdf9f5; border:1px solid #f0e0cc; border-radius:12px; padding:20px 24px; margin-bottom:20px; }
+  .dist-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #ede8e2; flex-wrap:wrap; gap:8px; }
+  .dist-label { font-size:13px; font-weight:600; color:#444; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .badge-auto { background:#f5a623; color:#fff; font-size:10px; padding:1px 7px; border-radius:10px; font-weight:700; }
+  .badge-req { background:#3b82f6; color:#fff; font-size:10px; padding:1px 7px; border-radius:10px; font-weight:700; }
+  .dist-right { display:flex; align-items:center; gap:8px; }
+  input.dist-input { width:90px; padding:8px 10px; border:1.5px solid #ddd; border-radius:8px; font-size:15px; text-align:right; outline:none; }
+  .dist-unit { font-size:13px; color:#666; }
+  .dist-calc { font-size:13px; color:#e07b3a; font-weight:700; min-width:72px; text-align:right; }
+  .total-row { display:flex; justify-content:space-between; font-size:14px; padding:4px 0; color:#444; margin-top:16px; }
+  .total-amount { display:flex; justify-content:space-between; font-size:22px; font-weight:900; color:#e07b3a; border-top:2px solid #e07b3a; margin-top:8px; padding-top:10px; }
+
+  .btn-primary { background:linear-gradient(135deg,#d4611a,#f5a623); color:#fff; border:none; border-radius:10px; padding:14px 36px; font-size:16px; font-weight:700; cursor:pointer; width:100%; margin-top:8px; letter-spacing:.03em; }
+  .btn-primary:disabled { opacity:.45; cursor:not-allowed; }
+
+  /* ローディング・エラー */
+  .toast { position:fixed; bottom:24px; right:24px; padding:14px 22px; border-radius:10px; font-size:14px; font-weight:700; color:#fff; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,.2); animation: fadeIn .3s; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .spinner { display:inline-block; width:18px; height:18px; border:3px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; margin-right:8px; vertical-align:middle; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+
+  .success-box { text-align:center; padding:40px 20px; }
+  .success-box h2 { font-size:22px; font-weight:800; margin-bottom:8px; }
+
+  .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:20px; }
+  .summary-card { background:#fff; border-radius:12px; padding:20px 24px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+  .summary-num { font-size:30px; font-weight:900; margin-bottom:4px; }
+  .summary-label { font-size:12px; color:#777; font-weight:600; }
+
+  .company-stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+  .stat-card { background:#fafafa; border:1px solid #eee; border-radius:12px; padding:16px 18px; }
+  .stat-card-title { font-size:13px; font-weight:800; margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid #eee; }
+  .stat-row { display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; }
+  .stat-total { display:flex; justify-content:space-between; font-size:16px; font-weight:900; color:#e07b3a; border-top:1px solid #eee; margin-top:6px; padding-top:8px; }
+
+  /* GAS設定パネル */
+  .gas-panel { background:#fffbe6; border:1.5px solid #f5a623; border-radius:12px; padding:16px 20px; margin-bottom:20px; }
+  .gas-panel h3 { font-size:14px; font-weight:800; margin-bottom:8px; color:#92400e; }
+  .gas-input-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .gas-input-row input { flex:1; min-width:200px; padding:8px 12px; border:1.5px solid #f5a623; border-radius:8px; font-size:12px; outline:none; }
+  .gas-save-btn { background:#e07b3a; color:#fff; border:none; border-radius:8px; padding:8px 18px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap; }
+  .gas-status { font-size:11px; margin-top:6px; }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { padding:10px 12px; text-align:left; font-size:11px; font-weight:700; color:#666; white-space:nowrap; background:#f5f3ef; }
+  td { padding:12px; vertical-align:middle; border-bottom:1px solid #f0ece8; }
+  .status-badge { border-radius:20px; padding:3px 10px; font-size:11px; font-weight:700; }
+  .btn-approve { background:#4caf7d; color:#fff; border:none; border-radius:6px; padding:5px 14px; font-size:12px; font-weight:700; cursor:pointer; }
+  .btn-revert { background:#f5f5f5; color:#666; border:1px solid #ddd; border-radius:6px; padding:5px 14px; font-size:12px; font-weight:700; cursor:pointer; }
+  .btn-reload { background:#f0f7ff; color:#3b82f6; border:1.5px solid #3b82f6; border-radius:8px; padding:6px 16px; font-size:12px; font-weight:700; cursor:pointer; }
+
+  footer { text-align:center; padding:16px; font-size:11px; color:#aaa; border-top:1px solid #e8e8e8; background:#fff; line-height:1.8; }
+</style>
+</head>
+<body>
+<!-- ===== パスワード画面 ===== -->
+<div id="pw-screen">
+  <div class="pw-box">
+    <div class="pw-logo">🏥</div>
+    <div class="pw-title">交通費精算システム</div>
+    <div class="pw-sub">2026年度 健康診断　アクセスにはパスワードが必要です</div>
+    <input class="pw-input" id="pw-input" type="password" placeholder="パスワードを入力" maxlength="30"
+      onkeydown="if(event.key==='Enter') checkPw()"/>
+    <button class="pw-btn" onclick="checkPw()">ログイン →</button>
+    <div class="pw-error" id="pw-error"></div>
+    <div class="pw-hint">社員の方はパスワードを担当者にお問い合わせください</div>
+  </div>
+</div>
+
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+const RATE = 15.8;
+const CLINIC = { name:"伊勢崎健診プラザ", address:"群馬県伊勢崎市中町655-1", lat:36.3108, lng:139.1975 };
+const GAS_URL_KEY = "gas_url_v1";
+
+const COMPANIES = [
+  { id:"incubic", name:"株式会社インキュービック" },
+  { id:"tec",     name:"THE EC ARCHITECTS株式会社" },
+  { id:"other",   name:"その他" },
+];
+
+const LOCATIONS = [
+  { id:"home",        name:"自宅",               icon:"🏠", address:"",                              lat:null,    lng:null,     isManual:true },
+  { id:"tatebayashi", name:"Housedo両毛館林店",   icon:"🏢", address:"群馬県館林市花山町32-8",         lat:36.2458, lng:139.5398, isManual:false },
+  { id:"isesaki",     name:"Housedo伊勢崎連取店", icon:"🏢", address:"群馬県伊勢崎市連取元町114-19",  lat:36.3197, lng:139.1823, isManual:false },
+  { id:"ohara",       name:"大原倉庫",            icon:"🏢", address:"群馬県太田市大原町30-1",         lat:36.3012, lng:139.3765, isManual:false },
+  { id:"remote",      name:"在宅勤務",            icon:"🏠", address:"当日の自宅からの勤務",            lat:null,    lng:null,     isManual:true },
+];
+
+function haversine(la1,ln1,la2,ln2){
+  const R=6371,dL=(la2-la1)*Math.PI/180,dN=(ln2-ln1)*Math.PI/180;
+  const a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dN/2)**2;
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1.3*10)/10;
+}
+function clinicDist(id){
+  const l=LOCATIONS.find(x=>x.id===id);
+  if(!l||l.isManual||!l.lat) return null;
+  return haversine(l.lat,l.lng,CLINIC.lat,CLINIC.lng);
+}
+
+function LocationPicker({value,onChange}){
+  return (
+    <div className="loc-grid">
+      {LOCATIONS.map(loc=>{
+        const dist=clinicDist(loc.id);
+        return (
+          <button key={loc.id} className={"loc-card"+(value===loc.id?" active":"")} onClick={()=>onChange(loc.id)}>
+            <div className="loc-card-icon">{loc.icon}</div>
+            <div className="loc-card-name">{loc.name}</div>
+            {loc.address&&<div className="loc-card-addr">{loc.address}</div>}
+            {dist!==null&&<span className="loc-dist">健診まで約{dist}km</span>}
+            {loc.isManual&&<span className="loc-manual">距離を手入力</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function StatusBadge({status}){
+  const ok=status==="承認済";
+  return <span className="status-badge" style={{background:ok?"#e8f8ef":"#fff8e6",color:ok?"#2e7d52":"#b45309",border:`1px solid ${ok?"#a7f3d0":"#fde68a"}`}}>{ok?"✅ 承認済":"⏳ 申請中"}</span>;
+}
+
+function Toast({msg,type}){
+  const bg=type==="error"?"#ef4444":type==="success"?"#4caf7d":"#3b82f6";
+  return <div className="toast" style={{background:bg}}>{msg}</div>;
+}
+
+function App(){
+  const [view,setView]=useState("form");
+  const [records,setRecords]=useState([]);
+  const [done,setDone]=useState(false);
+  const [form,setForm]=useState({name:"",company:"",date:"",from:"",to:"",d1:"",d2:"",note:""});
+  const [gasUrl,setGasUrl]=useState(()=>localStorage.getItem(GAS_URL_KEY)||"");
+  const [gasInput,setGasInput]=useState(()=>localStorage.getItem(GAS_URL_KEY)||"");
+  const [loading,setLoading]=useState(false);
+  const [toast,setToast]=useState(null);
+
+  function showToast(msg,type="success",ms=3000){
+    setToast({msg,type});
+    setTimeout(()=>setToast(null),ms);
+  }
+
+  // GASからデータ取得
+  const fetchRecords = useCallback(async()=>{
+    if(!gasUrl) return;
+    setLoading(true);
+    try{
+      const res=await fetch(gasUrl,{
+        method:"POST",
+        body:JSON.stringify({action:"getAll"}),
+      });
+      const data=await res.json();
+      if(data.success) setRecords(data.records||[]);
+      else showToast("データ取得に失敗しました","error");
+    }catch(e){
+      showToast("GASへの接続に失敗しました。URLを確認してください","error");
+    }finally{setLoading(false);}
+  },[gasUrl]);
+
+  useEffect(()=>{if(gasUrl&&view==="admin") fetchRecords();},[gasUrl,view]);
+
+  const fromLoc=LOCATIONS.find(l=>l.id===form.from);
+  const toLoc=LOCATIONS.find(l=>l.id===form.to);
+  const auto1=form.from?clinicDist(form.from):null;
+  const auto2=form.to?clinicDist(form.to):null;
+  const d1=parseFloat(form.d1)||(auto1??0);
+  const d2=parseFloat(form.d2)||(auto2??0);
+  const totalKm=Math.round((d1+d2)*10)/10;
+  const totalAmt=Math.floor(totalKm*RATE);
+  const canSubmit=form.name&&form.company&&form.date&&form.from&&form.to;
+
+  async function submit(){
+    if(!canSubmit) return;
+    const payload={
+      action:"submit",
+      id:String(Date.now()),
+      name:form.name, company:form.company, date:form.date,
+      from:form.from, to:form.to,
+      d1:String(form.d1||auto1||0),
+      d2:String(form.d2||auto2||0),
+      totalKm, amount:totalAmt, note:form.note,
+    };
+    if(gasUrl){
+      setLoading(true);
+      try{
+        const res=await fetch(gasUrl,{method:"POST",body:JSON.stringify(payload)});
+        const data=await res.json();
+        if(!data.success) throw new Error(data.message);
+      }catch(e){
+        showToast("スプレッドシートへの保存に失敗しました: "+e.message,"error");
+        setLoading(false);
+        return;
+      }finally{setLoading(false);}
+    }
+    setRecords(r=>[{...payload,status:"申請中"},...r]);
+    setDone(true);
+  }
+
+  function reset(){setForm({name:"",company:"",date:"",from:"",to:"",d1:"",d2:"",note:""});setDone(false);}
+  function setF(k,v){setForm(f=>({...f,[k]:v}));}
+
+  async function toggleStatus(id,status){
+    if(gasUrl){
+      try{
+        await fetch(gasUrl,{method:"POST",body:JSON.stringify({action:"updateStatus",id,status})});
+      }catch(e){ showToast("ステータス更新に失敗しました","error"); return; }
+    }
+    setRecords(r=>r.map(rec=>rec.id===id?{...rec,status}:rec));
+    showToast(status==="承認済"?"承認しました":"差し戻しました", status==="承認済"?"success":"error",2000);
+  }
+
+  function saveGasUrl(){
+    localStorage.setItem(GAS_URL_KEY,gasInput);
+    setGasUrl(gasInput);
+    showToast("GAS URLを保存しました。データを読み込みます…","success");
+  }
+
+  const totalApplied=records.reduce((s,r)=>s+(Number(r.amount)||0),0);
+  const pending=records.filter(r=>r.status==="申請中");
+  const approved=records.filter(r=>r.status==="承認済");
+
+  return (
+    <div>
+      {toast&&<Toast msg={toast.msg} type={toast.type}/>}
+
+      <header className="header">
+        <div className="header-inner">
+          <div>
+            <div className="header-badge">2026年度 健康診断</div>
+            <h1>交通費精算システム</h1>
+            <p className="header-sub">🏥 {CLINIC.name}　{CLINIC.address}</p>
+          </div>
+          <div className="tabs">
+            <button className={"tab"+(view==="form"?" active":"")} onClick={()=>setView("form")}>📋 申請フォーム</button>
+            <button className={"tab"+(view==="admin"?" active":"")} onClick={()=>{setView("admin");if(gasUrl)fetchRecords();}}>📊 管理画面</button>
+            <button className={"tab"+(view==="settings"?" active":"")} onClick={()=>setView("settings")}>⚙️ 設定</button>
+          </div>
+        </div>
+      </header>
+
+      <div className="main">
+
+        {/* ===== 設定画面 ===== */}
+        {view==="settings"&&(
+          <div className="card">
+            <h2 style={{fontSize:20,fontWeight:800,marginBottom:20}}>⚙️ Google スプレッドシート連携設定</h2>
+            <div className="gas-panel">
+              <h3>📋 GAS Web アプリURL</h3>
+              <p className="helper" style={{marginBottom:10}}>
+                Google Apps Script をデプロイして発行された URL を貼り付けてください。<br/>
+                設定方法は別紙「セットアップ手順書」を参照してください。
+              </p>
+              <div className="gas-input-row">
+                <input type="text" value={gasInput} onChange={e=>setGasInput(e.target.value)}
+                  placeholder="https://script.google.com/macros/s/xxxxxxxx/exec"/>
+                <button className="gas-save-btn" onClick={saveGasUrl}>保存して接続</button>
+              </div>
+              {gasUrl&&(
+                <p className="gas-status" style={{color:"#4caf7d",marginTop:8}}>
+                  ✅ 接続済み：{gasUrl.slice(0,60)}…
+                </p>
+              )}
+              {!gasUrl&&(
+                <p className="gas-status" style={{color:"#b45309",marginTop:8}}>
+                  ⚠️ 未設定。URLを入力して「保存して接続」を押してください。
+                </p>
+              )}
+            </div>
+            <div style={{background:"#f0f7ff",border:"1.5px solid #93c5fd",borderRadius:12,padding:"16px 20px"}}>
+              <h3 style={{fontSize:14,fontWeight:800,marginBottom:10,color:"#1d4ed8"}}>📌 接続しない場合の動作</h3>
+              <p style={{fontSize:13,color:"#555",lineHeight:1.8}}>
+                GAS URLを設定しなくても申請・管理機能は使えます。<br/>
+                ただし<strong>ページを閉じるとデータが消えます</strong>。<br/>
+                本番運用では必ずGASを設定してください。
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ===== 申請フォーム ===== */}
+        {view==="form"&&(
+          <div className="card">
+            {!gasUrl&&(
+              <div style={{background:"#fffbe6",border:"1px solid #f5a623",borderRadius:8,padding:"10px 16px",marginBottom:16,fontSize:12,color:"#92400e"}}>
+                ⚠️ スプレッドシート未連携のため、データはページを閉じると消えます。
+                <button onClick={()=>setView("settings")} style={{marginLeft:10,background:"none",border:"none",color:"#d4611a",fontWeight:700,cursor:"pointer",fontSize:12,textDecoration:"underline"}}>設定する →</button>
+              </div>
+            )}
+            {done?(
+              <div className="success-box">
+                <div style={{fontSize:60,marginBottom:12}}>✅</div>
+                <h2>申請完了しました</h2>
+                <p style={{color:"#555",lineHeight:1.9,margin:"8px 0 28px"}}>
+                  {form.name} さんの申請を受け付けました。<br/>
+                  精算額：<strong style={{color:"#e07b3a",fontSize:24}}>¥{totalAmt.toLocaleString()}</strong>（{totalKm} km）
+                  {gasUrl&&<><br/><span style={{fontSize:12,color:"#4caf7d"}}>✅ スプレッドシートに保存されました</span></>}
+                </p>
+                <button className="btn-primary" style={{maxWidth:260,margin:"0 auto"}} onClick={reset}>続けて申請する</button>
+              </div>
+            ):(
+              <>
+                <div className="form-header">
+                  <h2>交通費申請フォーム</h2>
+                  <div className="rate-chip">精算レート ¥{RATE} / km</div>
+                </div>
+
+                <div className="grid2">
+                  <div className="fg">
+                    <label className="lbl">氏名 <span className="req">必須</span></label>
+                    <input type="text" placeholder="例：田中 花子" value={form.name} onChange={e=>setF("name",e.target.value)}/>
+                  </div>
+                  <div className="fg">
+                    <label className="lbl">健診受診日 <span className="req">必須</span></label>
+                    <input type="date" value={form.date} min="2026-04-13" max="2026-05-31" onChange={e=>setF("date",e.target.value)}/>
+                  </div>
+                </div>
+
+                <div className="fg">
+                  <label className="lbl">所属会社 <span className="req">必須</span></label>
+                  <div className="company-grid">
+                    {COMPANIES.map(c=>(
+                      <button key={c.id} className={"sel-card"+(form.company===c.id?" active":"")} onClick={()=>setF("company",c.id)}>
+                        🏬 {c.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="route-box">
+                  <div style={{fontSize:14,fontWeight:800,marginBottom:4}}>🗺 当日の移動経路 <span className="req">必須</span></div>
+                  <p className="helper">出発地と到着地をそれぞれ選択してください。行き・帰りで場所が異なっても対応しています。</p>
+                  {(form.from||form.to)&&(
+                    <div className="route-visual">
+                      <div className="route-node">
+                        <div className="route-node-icon">{fromLoc?.icon||"？"}</div>
+                        <div className="route-node-label">{fromLoc?.name||"出発地を選択"}</div>
+                      </div>
+                      <div className="route-arrow">→ 健診プラザ →</div>
+                      <div className="route-node">
+                        <div className="route-node-icon">{toLoc?.icon||"？"}</div>
+                        <div className="route-node-label">{toLoc?.name||"到着地を選択"}</div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="route-grid">
+                    <div>
+                      <div className="route-step-header">
+                        <span className="route-step-badge" style={{background:"#e07b3a"}}>出発地</span>
+                        <span style={{fontSize:12,color:"#888"}}>健診前の場所</span>
+                      </div>
+                      <LocationPicker value={form.from} onChange={v=>{setF("from",v);setF("d1","");}}/>
+                    </div>
+                    <div>
+                      <div className="route-step-header">
+                        <span className="route-step-badge" style={{background:"#4caf7d"}}>到着地</span>
+                        <span style={{fontSize:12,color:"#888"}}>健診後の場所</span>
+                      </div>
+                      <LocationPicker value={form.to} onChange={v=>{setF("to",v);setF("d2","");}}/>
+                    </div>
+                  </div>
+                </div>
+
+                {form.from&&form.to&&(
+                  <div className="dist-box">
+                    <h3 style={{fontSize:14,fontWeight:800,marginBottom:4}}>🚗 区間別距離を入力</h3>
+                    <p className="helper">拠点〜健診プラザ間は概算を自動表示しています。自宅・在宅勤務の場合は実際の距離を手入力してください。</p>
+                    <div className="dist-row">
+                      <div className="dist-label">
+                        {fromLoc?.icon} {fromLoc?.name} → 健診プラザ
+                        {auto1!==null&&!form.d1&&<span className="badge-auto">自動</span>}
+                        {fromLoc?.isManual&&<span className="badge-req">要入力</span>}
+                      </div>
+                      <div className="dist-right">
+                        <input className="dist-input" type="number" step="0.1" min="0"
+                          style={{borderColor:auto1&&!form.d1?"#f5a623":fromLoc?.isManual?"#3b82f6":"#ddd"}}
+                          value={form.d1!==""?form.d1:(auto1??"")} placeholder={auto1?String(auto1):"0.0"}
+                          onChange={e=>setF("d1",e.target.value)}/>
+                        <span className="dist-unit">km</span>
+                        <span className="dist-calc">→ ¥{Math.floor(d1*RATE).toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div className="dist-row" style={{borderBottom:"none"}}>
+                      <div className="dist-label">
+                        健診プラザ → {toLoc?.icon} {toLoc?.name}
+                        {auto2!==null&&!form.d2&&<span className="badge-auto">自動</span>}
+                        {toLoc?.isManual&&<span className="badge-req">要入力</span>}
+                      </div>
+                      <div className="dist-right">
+                        <input className="dist-input" type="number" step="0.1" min="0"
+                          style={{borderColor:auto2&&!form.d2?"#f5a623":toLoc?.isManual?"#3b82f6":"#ddd"}}
+                          value={form.d2!==""?form.d2:(auto2??"")} placeholder={auto2?String(auto2):"0.0"}
+                          onChange={e=>setF("d2",e.target.value)}/>
+                        <span className="dist-unit">km</span>
+                        <span className="dist-calc">→ ¥{Math.floor(d2*RATE).toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div className="total-row"><span>合計距離</span><strong>{totalKm} km</strong></div>
+                    <div className="total-amount"><span>精算金額</span><strong>¥{totalAmt.toLocaleString()}</strong></div>
+                  </div>
+                )}
+
+                <div className="fg">
+                  <label className="lbl">備考（任意）</label>
+                  <textarea placeholder="特記事項があれば記入してください" value={form.note} onChange={e=>setF("note",e.target.value)}/>
+                </div>
+                <button className="btn-primary" onClick={submit} disabled={!canSubmit||loading}>
+                  {loading?<><span className="spinner"/>送信中…</>:"申請する →"}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ===== 管理画面 ===== */}
+        {view==="admin"&&(
+          <div>
+            {!gasUrl&&(
+              <div style={{background:"#fffbe6",border:"1px solid #f5a623",borderRadius:10,padding:"12px 18px",marginBottom:16,fontSize:13,color:"#92400e"}}>
+                ⚠️ スプレッドシート未連携のため、このセッションの申請のみ表示されています。
+                <button onClick={()=>setView("settings")} style={{marginLeft:10,background:"none",border:"none",color:"#d4611a",fontWeight:700,cursor:"pointer",fontSize:13,textDecoration:"underline"}}>設定する →</button>
+              </div>
+            )}
+
+            <div className="summary-grid">
+              {[
+                {num:records.length,label:"総申請件数",color:"#888"},
+                {num:pending.length,label:"申請中",color:"#f5a623"},
+                {num:approved.length,label:"承認済",color:"#4caf7d"},
+                {num:`¥${totalApplied.toLocaleString()}`,label:"総精算額",color:"#e07b3a"},
+              ].map(({num,label,color})=>(
+                <div key={label} className="summary-card" style={{borderTop:`4px solid ${color}`}}>
+                  <div className="summary-num">{num}</div>
+                  <div className="summary-label">{label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="card" style={{marginBottom:16}}>
+              <h2 style={{fontSize:18,fontWeight:800,marginBottom:16}}>🏬 所属会社別集計</h2>
+              <div className="company-stat-grid">
+                {COMPANIES.map(c=>{
+                  const recs=records.filter(r=>r.company===c.id||r.company===c.name);
+                  const total=recs.reduce((s,r)=>s+(Number(r.amount)||0),0);
+                  const pend=recs.filter(r=>r.status==="申請中").length;
+                  return (
+                    <div key={c.id} className="stat-card">
+                      <div className="stat-card-title">🏬 {c.name}</div>
+                      <div className="stat-row"><span style={{color:"#666"}}>申請件数</span><strong>{recs.length}件</strong></div>
+                      <div className="stat-row"><span style={{color:"#666"}}>申請中</span><strong>{pend}件</strong></div>
+                      <div className="stat-total"><span>合計</span><strong>¥{total.toLocaleString()}</strong></div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="card">
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16,flexWrap:"wrap",gap:10}}>
+                <h2 style={{fontSize:18,fontWeight:800}}>📋 申請一覧</h2>
+                {gasUrl&&<button className="btn-reload" onClick={fetchRecords}>{loading?"読込中…":"🔄 最新データを取得"}</button>}
+              </div>
+              {records.length===0?(
+                <p style={{color:"#aaa",textAlign:"center",padding:"40px 0",fontSize:14}}>
+                  {gasUrl?"データがありません。「最新データを取得」を押してください。":"まだ申請がありません。"}
+                </p>
+              ):(
+                <div style={{overflowX:"auto"}}>
+                  <table>
+                    <thead>
+                      <tr>
+                        {["受診日","氏名","所属会社","移動経路","区間①","区間②","合計","精算額","ステータス","操作"].map(h=>(
+                          <th key={h}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {records.map(rec=>{
+                        const fl=LOCATIONS.find(l=>l.id===rec.from||l.name===rec.from);
+                        const tl=LOCATIONS.find(l=>l.id===rec.to||l.name===rec.to);
+                        const co=COMPANIES.find(c=>c.id===rec.company||c.name===rec.company);
+                        return (
+                          <tr key={rec.id}>
+                            <td>{rec.date}</td>
+                            <td><strong>{rec.name}</strong></td>
+                            <td style={{fontSize:11,fontWeight:700}}>{co?.name||rec.company||"—"}</td>
+                            <td>
+                              <div style={{display:"flex",alignItems:"center",gap:4,fontSize:16,whiteSpace:"nowrap"}}>
+                                <span title={fl?.name}>{fl?.icon||"📍"}</span>
+                                <span style={{fontSize:11,color:"#aaa"}}>→🏥→</span>
+                                <span title={tl?.name}>{tl?.icon||"📍"}</span>
+                              </div>
+                              <div style={{fontSize:10,color:"#aaa",marginTop:2}}>{fl?.name||rec.from} → {tl?.name||rec.to}</div>
+                            </td>
+                            <td style={{textAlign:"right",fontSize:12}}>{rec.d1} km</td>
+                            <td style={{textAlign:"right",fontSize:12}}>{rec.d2} km</td>
+                            <td style={{textAlign:"right",fontSize:12}}>{rec.totalKm} km</td>
+                            <td style={{textAlign:"right",fontWeight:800,color:"#e07b3a",fontSize:15}}>¥{Number(rec.amount).toLocaleString()}</td>
+                            <td><StatusBadge status={rec.status}/></td>
+                            <td>
+                              {rec.status==="申請中"
+                                ?<button className="btn-approve" onClick={()=>toggleStatus(rec.id,"承認済")}>承認</button>
+                                :<button className="btn-revert" onClick={()=>toggleStatus(rec.id,"申請中")}>差戻</button>}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <footer>
+        精算レート ¥{RATE}/km　｜　健診場所：{CLINIC.name}（{CLINIC.address}）<br/>
+        ※拠点〜健診間の距離は直線距離×1.3の概算です。自宅・在宅勤務の距離は手入力してください。
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+
+<script>
+// =============================================
+// パスワード設定　← ここを変更してください
+// =============================================
+const APP_PASSWORD = "kenko2026";
+// =============================================
+
+const PW_KEY = "health_app_auth_v1";
+
+function checkPw() {
+  const input = document.getElementById("pw-input");
+  const errEl = document.getElementById("pw-error");
+  if (input.value === APP_PASSWORD) {
+    sessionStorage.setItem(PW_KEY, "1");
+    document.getElementById("pw-screen").classList.add("hidden");
+    errEl.textContent = "";
+  } else {
+    errEl.textContent = "パスワードが正しくありません";
+    input.classList.add("error");
+    input.value = "";
+    setTimeout(() => input.classList.remove("error"), 400);
+  }
+}
+
+// ページ読み込み時に認証済みか確認
+(function() {
+  if (sessionStorage.getItem(PW_KEY) === "1") {
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("pw-screen").classList.add("hidden");
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
