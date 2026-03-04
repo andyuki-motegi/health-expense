@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>交通費精算システム｜2026年度 健康診断</title>
-<!-- 検索エンジンにインデックスさせない -->
-<meta name="robots" content="noindex, nofollow, noarchive">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -13,40 +11,6 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Noto Sans JP', 'Hiragino Sans', sans-serif; background: #f5f3ef; color: #2d2d2d; }
-
-  /* ===== パスワード画面 ===== */
-  #pw-screen {
-    position: fixed; inset: 0; z-index: 9999;
-    background: linear-gradient(135deg, #d4611a 0%, #e07b3a 50%, #f5a623 100%);
-    display: flex; align-items: center; justify-content: center;
-  }
-  #pw-screen.hidden { display: none; }
-  .pw-box {
-    background: #fff; border-radius: 20px; padding: 48px 40px;
-    width: 100%; max-width: 400px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
-    text-align: center;
-  }
-  .pw-logo { font-size: 48px; margin-bottom: 12px; }
-  .pw-title { font-size: 20px; font-weight: 800; margin-bottom: 4px; color: #1a1a1a; }
-  .pw-sub { font-size: 13px; color: #888; margin-bottom: 32px; }
-  .pw-input {
-    width: 100%; padding: 14px 18px; border: 2px solid #ddd; border-radius: 10px;
-    font-size: 18px; text-align: center; letter-spacing: 4px; outline: none;
-    font-family: inherit; margin-bottom: 14px; transition: border-color .2s;
-  }
-  .pw-input:focus { border-color: #e07b3a; }
-  .pw-input.error { border-color: #ef4444; animation: shake .3s; }
-  .pw-btn {
-    width: 100%; padding: 14px; background: linear-gradient(135deg,#d4611a,#f5a623);
-    color: #fff; border: none; border-radius: 10px; font-size: 16px; font-weight: 700;
-    cursor: pointer; font-family: inherit; margin-bottom: 12px;
-  }
-  .pw-error { color: #ef4444; font-size: 13px; font-weight: 700; min-height: 18px; }
-  .pw-hint { font-size: 11px; color: #ccc; margin-top: 20px; }
-  @keyframes shake {
-    0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
-  }
   button { font-family: inherit; }
   input, textarea { font-family: inherit; }
 
@@ -154,20 +118,6 @@
 </style>
 </head>
 <body>
-<!-- ===== パスワード画面 ===== -->
-<div id="pw-screen">
-  <div class="pw-box">
-    <div class="pw-logo">🏥</div>
-    <div class="pw-title">交通費精算システム</div>
-    <div class="pw-sub">2026年度 健康診断　アクセスにはパスワードが必要です</div>
-    <input class="pw-input" id="pw-input" type="password" placeholder="パスワードを入力" maxlength="30"
-      onkeydown="if(event.key==='Enter') checkPw()"/>
-    <button class="pw-btn" onclick="checkPw()">ログイン →</button>
-    <div class="pw-error" id="pw-error"></div>
-    <div class="pw-hint">社員の方はパスワードを担当者にお問い合わせください</div>
-  </div>
-</div>
-
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect, useCallback } = React;
@@ -246,17 +196,21 @@ function App(){
   }
 
   // GASからデータ取得
+  // GASはCORSの制約でfetch POSTが使えないため、GETパラメータで送信
+  function gasGet(gasUrl, params) {
+    const qs = Object.entries(params)
+      .map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join("&");
+    return fetch(`${gasUrl}?${qs}`, { method: "GET" }).then(r => r.json());
+  }
+
   const fetchRecords = useCallback(async()=>{
     if(!gasUrl) return;
     setLoading(true);
     try{
-      const res=await fetch(gasUrl,{
-        method:"POST",
-        body:JSON.stringify({action:"getAll"}),
-      });
-      const data=await res.json();
+      const data = await gasGet(gasUrl, { action:"getAll" });
       if(data.success) setRecords(data.records||[]);
-      else showToast("データ取得に失敗しました","error");
+      else showToast("データ取得に失敗しました: "+data.message,"error");
     }catch(e){
       showToast("GASへの接続に失敗しました。URLを確認してください","error");
     }finally{setLoading(false);}
@@ -288,9 +242,8 @@ function App(){
     if(gasUrl){
       setLoading(true);
       try{
-        const res=await fetch(gasUrl,{method:"POST",body:JSON.stringify(payload)});
-        const data=await res.json();
-        if(!data.success) throw new Error(data.message);
+        const data = await gasGet(gasUrl, payload);
+        if(!data.success) throw new Error(data.message||"不明なエラー");
       }catch(e){
         showToast("スプレッドシートへの保存に失敗しました: "+e.message,"error");
         setLoading(false);
@@ -307,7 +260,7 @@ function App(){
   async function toggleStatus(id,status){
     if(gasUrl){
       try{
-        await fetch(gasUrl,{method:"POST",body:JSON.stringify({action:"updateStatus",id,status})});
+        await gasGet(gasUrl, {action:"updateStatus", id:String(id), status});
       }catch(e){ showToast("ステータス更新に失敗しました","error"); return; }
     }
     setRecords(r=>r.map(rec=>rec.id===id?{...rec,status}:rec));
@@ -628,40 +581,5 @@ function App(){
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
-
-<script>
-// =============================================
-// パスワード設定　← ここを変更してください
-// =============================================
-const APP_PASSWORD = "kenko2026";
-// =============================================
-
-const PW_KEY = "health_app_auth_v1";
-
-function checkPw() {
-  const input = document.getElementById("pw-input");
-  const errEl = document.getElementById("pw-error");
-  if (input.value === APP_PASSWORD) {
-    sessionStorage.setItem(PW_KEY, "1");
-    document.getElementById("pw-screen").classList.add("hidden");
-    errEl.textContent = "";
-  } else {
-    errEl.textContent = "パスワードが正しくありません";
-    input.classList.add("error");
-    input.value = "";
-    setTimeout(() => input.classList.remove("error"), 400);
-  }
-}
-
-// ページ読み込み時に認証済みか確認
-(function() {
-  if (sessionStorage.getItem(PW_KEY) === "1") {
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("pw-screen").classList.add("hidden");
-    });
-  }
-})();
-</script>
-
 </body>
 </html>
