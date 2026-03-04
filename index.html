@@ -126,7 +126,6 @@ const RATE = 15.8;
 const CLINIC = { name:"伊勢崎健診プラザ", address:"群馬県伊勢崎市中町655-1", lat:36.3108, lng:139.1975 };
 const GAS_URL_KEY = "gas_url_v1";
 const ADMIN_PW = "admin2026"; // ← 管理者パスワード（変更してください）
-const ADMIN_KEY = "health_admin_auth_v1";
 
 const COMPANIES = [
   { id:"incubic", name:"株式会社インキュービック" },
@@ -188,7 +187,7 @@ function App(){
   const [done,setDone]=useState(false);
   const [form,setForm]=useState({name:"",company:"",date:"",from:"",to:"",d1:"",d2:"",note:""});
   const [gasUrl,setGasUrl]=useState(()=>localStorage.getItem(GAS_URL_KEY)||"");
-  const [adminAuthed,setAdminAuthed]=useState(()=>sessionStorage.getItem(ADMIN_KEY)==="1");
+  const [adminAuthed,setAdminAuthed]=useState(false);
   const [adminPwInput,setAdminPwInput]=useState("");
   const [adminPwError,setAdminPwError]=useState("");
   const [gasInput,setGasInput]=useState(()=>localStorage.getItem(GAS_URL_KEY)||"");
@@ -364,7 +363,7 @@ function App(){
                 onChange={e=>{setAdminPwInput(e.target.value);setAdminPwError("");}}
                 onKeyDown={e=>{if(e.key==="Enter"){
                   if(adminPwInput===ADMIN_PW){
-                    sessionStorage.setItem(ADMIN_KEY,"1");
+                    
                     setAdminAuthed(true);setAdminPwInput("");setAdminPwError("");
                     setView("admin");if(gasUrl)fetchRecords();
                   } else {
@@ -376,7 +375,7 @@ function App(){
             </div>
             <button className="btn-primary" onClick={()=>{
               if(adminPwInput===ADMIN_PW){
-                sessionStorage.setItem(ADMIN_KEY,"1");
+                
                 setAdminAuthed(true);setAdminPwInput("");setAdminPwError("");
                 setView("admin");if(gasUrl)fetchRecords();
               } else {
