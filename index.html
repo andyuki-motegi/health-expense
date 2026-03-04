@@ -199,9 +199,15 @@ function App(){
   // GASはCORSの制約でfetch POSTが使えないため、GETパラメータで送信
   function gasGet(gasUrl, params) {
     const qs = Object.entries(params)
-      .map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
       .join("&");
-    return fetch(`${gasUrl}?${qs}`, { method: "GET" }).then(r => r.json());
+    // GASはリダイレクトを返すため redirect:"follow" が必須
+    return fetch(`${gasUrl}?${qs}`, { method: "GET", redirect: "follow" })
+      .then(r => r.text())
+      .then(text => {
+        try { return JSON.parse(text); }
+        catch(e) { throw new Error("レスポンス解析失敗: " + text.slice(0, 100)); }
+      });
   }
 
   const fetchRecords = useCallback(async()=>{
