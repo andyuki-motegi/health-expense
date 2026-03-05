@@ -248,7 +248,7 @@ function App(){
   const d2=parseFloat(form.d2)||(auto2??0);
   const totalKm=Math.round((d1+d2)*10)/10;
   const totalAmt=Math.floor(totalKm*RATE);
-  const // 手動入力が必要な場所を選んでいる場合、距離が入力されていないと申請不可
+  // 手動入力が必要な場所を選んでいる場合、距離が入力されていないと申請不可
   const d1Required=form.from&&LOCATIONS.find(l=>l.id===form.from)?.isManual;
   const d2Required=form.to&&LOCATIONS.find(l=>l.id===form.to)?.isManual;
   const d1Valid=!d1Required||(form.d1&&parseFloat(form.d1)>0);
