@@ -127,6 +127,10 @@ const { useState, useEffect, useCallback } = React;
 const RATE = 15.8;
 const CLINIC = { name:"伊勢崎健診プラザ", address:"群馬県伊勢崎市中町655-1", lat:36.3108, lng:139.1975 };
 const GAS_URL_KEY = "gas_url_v1";
+// =============================================
+// GAS URL（デプロイ後にここに貼り付けてください）
+const HARDCODED_GAS_URL = "";
+// =============================================
 const ADMIN_PW = "admin2026"; // ← 管理者パスワード（変更してください）
 
 const COMPANIES = [
@@ -188,11 +192,17 @@ function App(){
   const [records,setRecords]=useState([]);
   const [done,setDone]=useState(false);
   const [form,setForm]=useState({name:"",company:"",date:"",from:"",to:"",d1:"",d2:"",note:""});
-  const [gasUrl,setGasUrl]=useState(()=>localStorage.getItem(GAS_URL_KEY)||"");
+  const [gasUrl,setGasUrl]=useState(()=>{
+    if(HARDCODED_GAS_URL) return HARDCODED_GAS_URL;
+    try{ return localStorage.getItem(GAS_URL_KEY)||""; }catch(e){ return ""; }
+  });
   const [adminAuthed,setAdminAuthed]=useState(false);
   const [adminPwInput,setAdminPwInput]=useState("");
   const [adminPwError,setAdminPwError]=useState("");
-  const [gasInput,setGasInput]=useState(()=>localStorage.getItem(GAS_URL_KEY)||"");
+  const [gasInput,setGasInput]=useState(()=>{
+    if(HARDCODED_GAS_URL) return HARDCODED_GAS_URL;
+    try{ return localStorage.getItem(GAS_URL_KEY)||""; }catch(e){ return ""; }
+  });
   const [loading,setLoading]=useState(false);
   const [toast,setToast]=useState(null);
 
@@ -291,7 +301,7 @@ function App(){
   }
 
   function saveGasUrl(){
-    localStorage.setItem(GAS_URL_KEY,gasInput);
+    try{ localStorage.setItem(GAS_URL_KEY,gasInput); }catch(e){ /* iframeではlocalStorage使用不可 */ }
     setGasUrl(gasInput);
     showToast("GAS URLを保存しました。データを読み込みます…","success");
   }
@@ -339,7 +349,12 @@ function App(){
                   placeholder="https://script.google.com/macros/s/xxxxxxxx/exec"/>
                 <button className="gas-save-btn" onClick={saveGasUrl}>保存して接続</button>
               </div>
-              {gasUrl&&(
+              {HARDCODED_GAS_URL&&(
+                <p className="gas-status" style={{color:"#4caf7d",marginTop:8}}>
+                  ✅ URLはファイルに直接設定されています（変更不要）
+                </p>
+              )}
+              {!HARDCODED_GAS_URL&&gasUrl&&(
                 <p className="gas-status" style={{color:"#4caf7d",marginTop:8}}>
                   ✅ 接続済み：{gasUrl.slice(0,60)}…
                 </p>
